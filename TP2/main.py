@@ -1,5 +1,4 @@
-import math
-import sys
+import matplotlib.pyplot as plt
 
 
 # Fonction : Création d'une matrice à partir du fichier PGM d'une image
@@ -49,12 +48,13 @@ def createMatrix(file):
 
     return [matrix, magic_number, size, maximum_value]
 
+
 def createImage(matrix, file_name, magic_number, comments, width, height, maximum_value):
     fic = open(file_name, 'w')  # On ouvre le fichier PGM en écriture
     fic.write(magic_number + '\n')  # On note le format du fichier
     fic.write('# ' + comments + '\n')  # Commentaires facultatifs
     fic.write(str(width) + ' ' + str(height) + '\n')  # On note ses dimensions
-    if maximum_value!=0:
+    if maximum_value != 0:
         fic.write(str(maximum_value) + '\n')  # On note la valeur de l'intensité maximale
     # On note les valeurs de la matrice
     for line in matrix:
@@ -63,6 +63,7 @@ def createImage(matrix, file_name, magic_number, comments, width, height, maximu
         fic.write('\n')
     fic.write('\n')
     fic.close()
+
 
 def convertPPMtoPGM(matrixR, matrixG, matrixB):
     new_matrix = [[] for x in range(int(len(matrixR)))]
@@ -76,13 +77,16 @@ def convertPPMtoPGM(matrixR, matrixG, matrixB):
 
     return [new_matrix, max_value]
 
+
 def calculateShine(matrix):
     intensity = 0
     for line in matrix:
         for value in line:
             intensity += value
     intensity = int(intensity / (len(matrix) * len(matrix[1])))
+
     return intensity
+
 
 def calculateContrastVariation(matrix):
     maxValue = 0
@@ -96,22 +100,42 @@ def calculateContrastVariation(matrix):
     if maxValue == 0 and minValue == 0:
         variation = 0
     else:
-        variation = int((maxValue - minValue)/(maxValue + minValue))
+        variation = int((maxValue - minValue) / (maxValue + minValue))
     return variation
 
-def calculateContrastEcartType(matrix):
-    brillance = calculateShine(matrix)
+
+def calculateContrastEcartType(matrix, shine):
     contrast = 0
     for line in matrix:
         for value in line:
-            contrast += pow(value - brillance, 2)
+            contrast += pow(value - shine, 2)
     contrast = int(pow(contrast / (len(matrix) * len(matrix[1])), 0.5))
-    print(contrast)
     return contrast
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
 
+def createHistogram(matrix, maxValue, name):
+    histogramMatrix = [0 for x in range(maxValue + 1)]
+    for line in matrix:
+        for value in line:
+            histogramMatrix[value] += 1
+    plt.axis([0, len(histogramMatrix), 0, max(histogramMatrix)])
+    plt.bar([x + 1 for x in range(0, len(histogramMatrix))], histogramMatrix)
+    plt.savefig('histogram/' + name + '.png')
+    plt.close()
+    return histogramMatrix
+
+
+def createCumulativeHistogram(histogramMatrix, name):
+    for i in range(len(histogramMatrix)):
+        if i > 0:
+            histogramMatrix[i] += histogramMatrix[i - 1]
+    plt.plot(histogramMatrix)
+    plt.savefig('histogram/' + name + '.png')
+    plt.close()
+    return histogramMatrix
+
+
+if __name__ == '__main__':
     # Question 6 :
     image_data = createMatrix('images/feep.ascii.ppm')
     image_data2 = createMatrix('images/snail.ascii.ppm')
@@ -137,22 +161,29 @@ if __name__ == '__main__':
                 image_data2[3])
 
     # Question 8 :
-    convert_image_data = convertPPMtoPGM(image_data[0][0],image_data[0][1],image_data[0][2])
-    convert_image_data2 = convertPPMtoPGM(image_data2[0][0],image_data2[0][1],image_data2[0][2])
-    createImage(convert_image_data[0], 'convertPPMtoPGM.pgm', 'P2', 'conversion de PPM à PGM', len(convert_image_data[0][1]), len(convert_image_data[0]),
+    convert_image_data = convertPPMtoPGM(image_data[0][0], image_data[0][1], image_data[0][2])
+    convert_image_data2 = convertPPMtoPGM(image_data2[0][0], image_data2[0][1], image_data2[0][2])
+    createImage(convert_image_data[0], 'convertPPMtoPGM.pgm', 'P2', 'conversion de PPM à PGM',
+                len(convert_image_data[0][1]), len(convert_image_data[0]),
                 convert_image_data[1])
-    createImage(convert_image_data2[0], 'convertPPMtoPGM2.pgm', 'P2', 'conversion de PPM à PGM', len(convert_image_data2[0][1]), len(convert_image_data2[0]),
+    createImage(convert_image_data2[0], 'convertPPMtoPGM2.pgm', 'P2', 'conversion de PPM à PGM',
+                len(convert_image_data2[0][1]), len(convert_image_data2[0]),
                 convert_image_data2[1])
 
     # Question 9 :
-    calculateShine(convert_image_data[0])
-    calculateShine(convert_image_data2[0])
+    shine1 = calculateShine(convert_image_data[0])
+    shine2 = calculateShine(convert_image_data2[0])
 
     # Question 10 :
     calculateContrastVariation(convert_image_data[0])
     calculateContrastVariation(convert_image_data2[0])
 
     # Question 11 :
-    calculateContrastEcartType(convert_image_data[0])
-    calculateContrastEcartType(convert_image_data2[0])
+    calculateContrastEcartType(convert_image_data[0], shine1)
+    calculateContrastEcartType(convert_image_data2[0], shine2)
 
+    # Question 12 :
+    histogramMatrix1 = createHistogram(convert_image_data[0], convert_image_data[1], 'histogramMatrix1')
+    createCumulativeHistogram(histogramMatrix1, 'cumulativeHistogramMatrix1')
+    histogramMatrix2 = createHistogram(convert_image_data2[0], convert_image_data2[1], 'histogramMatrix2')
+    createCumulativeHistogram(histogramMatrix2, 'cumulativeHistogramMatrix2')
