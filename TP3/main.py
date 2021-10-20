@@ -1,4 +1,6 @@
+import copy
 import math
+import numpy as np
 
 # Fonction : Création d'une matrice à partir du fichier PGM d'une image
 # Paramètres : file = nom du fichier
@@ -44,7 +46,8 @@ def addPadding(matrix, filterSize):
 
 def convolution(matrix, filter):
     filterSize = int((len(filter[0])-1) / 2)
-    newMatrix = addPadding(matrix, filterSize)
+    newMatrix = addPadding(copy.deepcopy(matrix), filterSize)
+    maxPixel = 0
 
     matrixConvolution = [[] for x in range(int(len(newMatrix)) - filterSize * 2)]
 
@@ -59,20 +62,26 @@ def convolution(matrix, filter):
             right = int(newMatrix[x][y+1])
             top = int(newMatrix[x-1][y])
             bottom = int(newMatrix[x+1][y])
-            middle = int(matrix [x][y])
+            middle = int(newMatrix[x][y])
 
             result = topLeft * filter[0][0] + top * filter[0][1] + topRight * filter[0][2] + left * filter[1][0] + middle * filter[1][1] + right * filter[1][2] + bottomLeft * filter[2][0] + bottom * filter[2][1] + bottomRight * filter[2][2]
+            if result > maxPixel:
+                maxPixel = result
             if (result < 0):
                 result = 0
             matrixConvolution[x - filterSize].append(result)
-    return matrixConvolution
+    return [matrixConvolution, maxPixel]
 
 def outlineDetection(verticalMatrix, horizontalMatrix):
+    maxPixel = 0
     outlineMatrix = [[] for x in range(int(len(verticalMatrix)))]
     for x in range(len(verticalMatrix)):
         for y in range(len(verticalMatrix[0])):
-            outlineMatrix[x].append(int(math.sqrt(pow(verticalMatrix[x][y],2) + pow(horizontalMatrix[x][y],2))))
-    return outlineMatrix
+            result = int(math.sqrt(pow(verticalMatrix[x][y],2) + pow(horizontalMatrix[x][y],2)))
+            outlineMatrix[x].append(result)
+            if result > maxPixel:
+                maxPixel = result
+    return [outlineMatrix,maxPixel]
 
 def createImage(matrix, file_name, magic_number, comments, width, height, maximum_value):
     fic = open(file_name, 'w')  # On ouvre le fichier PGM en écriture
@@ -110,37 +119,51 @@ if __name__ == '__main__':
     horizontalLenaImageSobelConvolution = convolution(image_dataLena[0], sobelFilterHorizontal)
 
     # Question 2 :
-    createImage(verticalFeepImagePrewittConvolution, "verticalFeepImagePrewittConvolution.pgm", image_dataFeep[1], "inversion of the matrix", image_dataFeep[2][0],
-                image_dataFeep[2][1], image_dataFeep[3])
-    createImage(horizontalFeepImagePrewittConvolution, "horizontalFeepImagePrewittConvolution.pgm", image_dataFeep[1], "inversion of the matrix", image_dataFeep[2][0],
-                image_dataFeep[2][1], image_dataFeep[3])
-    createImage(verticalLenaImagePrewittConvolution, "verticalLenaImagePrewittConvolution.pgm", image_dataLena[1], "inversion of the matrix", image_dataLena[2][0],
-                image_dataLena[2][1], image_dataLena[3])
-    createImage(horizontalLenaImagePrewittConvolution, "horizontalLenaImagePrewittConvolution.pgm", image_dataLena[1], "inversion of the matrix", image_dataLena[2][0],
-                image_dataLena[2][1], image_dataLena[3])
+    createImage(verticalFeepImagePrewittConvolution[0], "verticalFeepImagePrewittConvolution.pgm", image_dataFeep[1], "inversion of the matrix", image_dataFeep[2][0],
+                image_dataFeep[2][1],verticalFeepImagePrewittConvolution[1])
+    createImage(horizontalFeepImagePrewittConvolution[0], "horizontalFeepImagePrewittConvolution.pgm", image_dataFeep[1], "inversion of the matrix", image_dataFeep[2][0],
+                image_dataFeep[2][1], horizontalFeepImagePrewittConvolution[1])
+    createImage(verticalLenaImagePrewittConvolution[0], "verticalLenaImagePrewittConvolution.pgm", image_dataLena[1],
+                "inversion of the matrix", image_dataLena[2][0],
+                image_dataLena[2][1], verticalLenaImagePrewittConvolution[1])
+    createImage(horizontalLenaImagePrewittConvolution[0], "horizontalLenaImagePrewittConvolution.pgm", image_dataLena[1],
+                "inversion of the matrix", image_dataLena[2][0],
+                image_dataLena[2][1], horizontalLenaImagePrewittConvolution[1])
 
-    createImage(verticalFeepImageSobelConvolution, "verticalFeepImageSobelConvolution.pgm", image_dataFeep[1], "inversion of the matrix", image_dataFeep[2][0],
-                image_dataFeep[2][1], image_dataFeep[3])
-    createImage(horizontalFeepImageSobelConvolution, "horizontalFeepImageSobelConvolution.pgm", image_dataFeep[1], "inversion of the matrix", image_dataFeep[2][0],
-                image_dataFeep[2][1], image_dataFeep[3])
-    createImage(verticalLenaImageSobelConvolution, "verticalLenaImageSobelConvolution.pgm", image_dataLena[1], "inversion of the matrix", image_dataLena[2][0],
-                image_dataLena[2][1], image_dataLena[3])
-    createImage(horizontalLenaImageSobelConvolution, "horizontalLenaImageSobelConvolution.pgm", image_dataLena[1], "inversion of the matrix", image_dataLena[2][0],
-                image_dataLena[2][1], image_dataLena[3])
+    createImage(verticalFeepImageSobelConvolution[0], "verticalFeepImageSobelConvolution.pgm", image_dataFeep[1],
+                "inversion of the matrix", image_dataFeep[2][0],
+                image_dataFeep[2][1], verticalFeepImageSobelConvolution[1])
+    createImage(horizontalFeepImageSobelConvolution[0], "horizontalFeepImageSobelConvolution.pgm", image_dataFeep[1],
+                "inversion of the matrix", image_dataFeep[2][0],
+                image_dataFeep[2][1], horizontalFeepImageSobelConvolution[1])
+    createImage(verticalLenaImageSobelConvolution[0], "verticalLenaImageSobelConvolution.pgm", image_dataLena[1],
+                "inversion of the matrix", image_dataLena[2][0],
+                image_dataLena[2][1], verticalLenaImageSobelConvolution[1])
+    createImage(horizontalLenaImageSobelConvolution[0], "horizontalLenaImageSobelConvolution.pgm", image_dataLena[1],
+                "inversion of the matrix", image_dataLena[2][0],
+                image_dataLena[2][1], horizontalLenaImageSobelConvolution[1])
+
+    # Question 3 :
+    feepImagePrewittOutlineDetection = outlineDetection(verticalFeepImagePrewittConvolution[0],
+                                                        horizontalFeepImagePrewittConvolution[0])
+    lenaImagePrewittOutlineDetection = outlineDetection(verticalLenaImagePrewittConvolution[0],
+                                                        horizontalLenaImagePrewittConvolution[0])
+    feepImageSobelOutlineDetection = outlineDetection(verticalFeepImageSobelConvolution[0],
+                                                      horizontalFeepImageSobelConvolution[0])
+    lenaImageSobelOutlineDetection = outlineDetection(verticalLenaImageSobelConvolution[0],
+                                                      horizontalLenaImageSobelConvolution[0])
 
 
+    createImage(feepImagePrewittOutlineDetection[0], "feepImagePrewittOutlineDetection.pgm", image_dataFeep[1],
+                "inversion of the matrix", image_dataFeep[2][0],
+                image_dataFeep[2][1], feepImagePrewittOutlineDetection[1])
+    createImage(lenaImagePrewittOutlineDetection[0], "lenaImagePrewittOutlineDetection.pgm", image_dataLena[1],
+                "inversion of the matrix", image_dataLena[2][0],
+                image_dataLena[2][1], lenaImagePrewittOutlineDetection[1])
+    createImage(feepImageSobelOutlineDetection[0], "feepImageSobelOutlineDetection.pgm", image_dataFeep[1],
+                "inversion of the matrix", image_dataFeep[2][0],
+                image_dataFeep[2][1], feepImageSobelOutlineDetection[1])
+    createImage(lenaImageSobelOutlineDetection[0], "lenaImageSobelOutlineDetection.pgm", image_dataLena[1],
+                "inversion of the matrix", image_dataLena[2][0],
+                image_dataLena[2][1], lenaImageSobelOutlineDetection[1])
 
-    #Question 3 :
-    feepImagePrewittOutlineDetection = outlineDetection(verticalFeepImagePrewittConvolution, horizontalFeepImagePrewittConvolution)
-    lenaImagePrewittOutlineDetection = outlineDetection(verticalLenaImagePrewittConvolution, horizontalLenaImagePrewittConvolution)
-    feepImageSobelOutlineDetection = outlineDetection(verticalFeepImageSobelConvolution, horizontalFeepImageSobelConvolution)
-    lenaImageSobelOutlineDetection = outlineDetection(verticalLenaImageSobelConvolution, horizontalLenaImageSobelConvolution)
-
-    createImage(feepImagePrewittOutlineDetection, "feepImagePrewittOutlineDetection.pgm", image_dataFeep[1], "inversion of the matrix", image_dataFeep[2][0],
-                image_dataFeep[2][1], image_dataFeep[3])
-    createImage(lenaImagePrewittOutlineDetection, "lenaImagePrewittOutlineDetection.pgm", image_dataFeep[1], "inversion of the matrix", image_dataFeep[2][0],
-                image_dataFeep[2][1], image_dataFeep[3])
-    createImage(feepImageSobelOutlineDetection, "feepImageSobelOutlineDetection.pgm", image_dataLena[1], "inversion of the matrix", image_dataLena[2][0],
-                image_dataLena[2][1], image_dataLena[3])
-    createImage(lenaImageSobelOutlineDetection, "lenaImageSobelOutlineDetection.pgm", image_dataLena[1], "inversion of the matrix", image_dataLena[2][0],
-                image_dataLena[2][1], image_dataLena[3])
