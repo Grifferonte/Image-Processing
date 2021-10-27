@@ -96,14 +96,16 @@ def convolution(matrix, filter):
             middle = int(newMatrix[x][y])
 
             # On applique pour chaque pixel l'opération de convolution par combinaison linéaire de ses voisins
-            result = topLeft * filter[0][0] + top * filter[0][1] + topRight * filter[0][2] + left * filter[1][0] + \
+            result = int(topLeft * filter[0][0] + top * filter[0][1] + topRight * filter[0][2] + left * filter[1][0] + \
                      middle * filter[1][1] + right * filter[1][2] + bottomLeft * filter[2][0] + bottom * filter[2][1] + \
-                     bottomRight * filter[2][2]
-            #On applique la valeur 0 ou 255 selon si le résultat de l'opération est inférieur ou supérieur au champ des valeurs possibles
+                     bottomRight * filter[2][2])
+            # On applique la valeur 0 ou 255 selon si le résultat de l'opération est inférieur ou supérieur au champ des valeurs possibles
+            if result < 0:
+                result = 0
+            elif result > 255:
+                result = 255
             if result > maxPixel:
                 maxPixel = result
-            if (result < 0):
-                result = 0
             matrixConvolution[x - filterSize].append(result)
     return [matrixConvolution, maxPixel]
 
@@ -117,9 +119,14 @@ def outlineDetection(verticalMatrix, horizontalMatrix):
         for y in range(len(verticalMatrix[0])):
              # Approximation de la norme du gradient par combination des gradients horizontaux et verticaux (les 2 matrices)
             result = int(math.sqrt(pow(verticalMatrix[x][y], 2) + pow(horizontalMatrix[x][y], 2)))
-            outlineMatrix[x].append(result)
+            if result < 0:
+                result = 0
+            elif result > 255:
+                result = 255
             if result > maxPixel:
                 maxPixel = result
+            outlineMatrix[x].append(result)
+
     return [outlineMatrix, maxPixel]
 
 if __name__ == '__main__':
@@ -130,6 +137,7 @@ if __name__ == '__main__':
     prewittFilterVertical = [[1, 1, 1], [0, 0, 0], [-1, -1, -1]]
     sobelFilterHorizontal = [[1, 0, -1], [2, 0, -2], [1, 0, -1]]
     sobelFilterVertical = [[1, 2, 1], [0, 0, 0], [-1, -2, -1]]
+
 
     verticalFeepImagePrewittConvolution = convolution(image_dataFeep[0], prewittFilterVertical)
     horizontalFeepImagePrewittConvolution = convolution(image_dataFeep[0], prewittFilterHorizontal)
